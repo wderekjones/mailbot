@@ -47,9 +47,37 @@ def main():
 
     service = build("gmail", "v1", credentials=creds)
 
+
+    userInfo = service.users().getProfile(userId='me').execute()
+    print(f"UserInfo is \n {userInfo}")
+    
     # Call the Gmail API
-    results = service.users().labels().list(userId="me").execute()
+    #results = service.users().labels().list(userId="me").execute()
+    
+    labelIds_list = ['INBOX', 'UNREAD']
+
+    results = service.users().messages().list(userId="me", labelIds=labelIds_list).execute()
+    
+    messages = results.get('messages', [])
+
+    if not messages:
+        print('no messages found.')
+
+    else:
+        payload_list = []
+        print('found {len(messages)} in {x for x in labelIds_list}.')
+        for message in messages:
+            msg = service.users().messages().get(userId='me', id=message['id']).execute()
+            payload_list.append(msg['payload'])
+            #print(msg['snippet'])
+            #print(msg['payload'])
+
+        with open('payload_list.pkl', 'wb') as handle:
+            pickle.dump(payload_list, handle)
+
+    '''
     labels = results.get("labels", [])
+
 
     if not labels:
         print("No labels found.")
@@ -59,11 +87,10 @@ def main():
             print(label["name"])
 
 
-    import pdb
     messages = service.users().messages().list(userId="me").execute()
-    pdb.set_trace()
     print(messages)
 
+    '''
 
 if __name__ == "__main__":
     main()
